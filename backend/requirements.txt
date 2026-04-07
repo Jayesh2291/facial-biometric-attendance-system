@@ -1,0 +1,9 @@
+Flask==2.3.3
+Flask-Cors==4.0.0
+python-dotenv==1.0.0
+opencv-python==4.8.1.78
+face-recognition==1.3.0
+ultralytics==8.0.196
+mysql-connector-python==8.1.0
+pandas==2.0.3
+numpy==1.26.4
