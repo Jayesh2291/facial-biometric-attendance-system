@@ -1,0 +1,160 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f5f6f8;
+  color: #1a1a1a;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.app-header h1 {
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  color: #666;
+  margin-top: 0;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.panel {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.panel-wide {
+  grid-column: 1 / -1;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.upload-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 220px;
+  border: 2px dashed #c9ccd1;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #888;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.upload-box:hover {
+  border-color: #4a7dfc;
+}
+
+.preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-button {
+  width: 100%;
+  padding: 0.7rem;
+  border: none;
+  border-radius: 8px;
+  background: #4a7dfc;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.scan-button:disabled {
+  background: #b7c4e6;
+  cursor: not-allowed;
+}
+
+.status-error {
+  color: #d63939;
+  margin-top: 0.75rem;
+}
+
+.result-box {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.result-box ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.name-known {
+  color: #1a7f37;
+  font-weight: 600;
+}
+
+.name-unknown {
+  color: #888;
+}
+
+.chip-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  background: #eef2ff;
+  color: #33389c;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table th,
+.history-table td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+@media (max-width: 700px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+}

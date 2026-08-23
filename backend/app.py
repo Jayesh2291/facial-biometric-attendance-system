@@ -1,10 +1,10 @@
 ﻿import logging
 import os
+import sqlite3
 from datetime import datetime
 
 import cv2
 import face_recognition
-import mysql.connector
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
@@ -15,10 +15,7 @@ from ultralytics import YOLO
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
-MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
-MYSQL_USER = os.getenv('MYSQL_USER', 'root')
-MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'password')
-MYSQL_DATABASE = os.getenv('MYSQL_DATABASE', 'attendance')
+DATABASE_PATH = os.getenv('DATABASE_PATH', os.path.join(BASE_DIR, 'attendance.db'))
 MODEL_PATH = os.getenv('YOLO_MODEL_PATH', os.path.join(BASE_DIR, 'yolov8n.pt'))
 FACES_DIR = os.path.join(BASE_DIR, 'faces')
 CSV_PATH = os.path.join(BASE_DIR, 'attendance.csv')
@@ -30,49 +27,22 @@ CORS(app)
 os.makedirs(FACES_DIR, exist_ok=True)
 
 
-def connect_database(database=None):
-    params = {
-        'host': MYSQL_HOST,
-        'user': MYSQL_USER,
-        'password': MYSQL_PASSWORD,
-        'auth_plugin': 'mysql_native_password'
-    }
-    if database:
-        params['database'] = database
-    return mysql.connector.connect(**params)
-
-
-def ensure_database():
-    try:
-        conn = connect_database(MYSQL_DATABASE)
-        conn.close()
-    except mysql.connector.Error:
-        conn = connect_database()
-        cursor = conn.cursor()
-        cursor.execute(f'CREATE DATABASE IF NOT EXISTS `{MYSQL_DATABASE}`')
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-
 def build_connection():
-    ensure_database()
-    connection = connect_database(MYSQL_DATABASE)
-    connection.autocommit = True
+    connection = sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+    connection.isolation_level = None  # autocommit
     return connection
 
 
 db = build_connection()
-cursor = db.cursor(buffered=True)
+cursor = db.cursor()
 
 cursor.execute(
     '''CREATE TABLE IF NOT EXISTS attendance (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        timestamp DATETIME NOT NULL
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        timestamp TEXT NOT NULL
     )'''
 )
-db.commit()
 
 try:
     model = YOLO(MODEL_PATH)
@@ -113,7 +83,7 @@ load_known_faces()
 
 def save_attendance_record(name: str):
     timestamp = datetime.now()
-    cursor.execute('INSERT INTO attendance (name, timestamp) VALUES (%s, %s)', (name, timestamp))
+    cursor.execute('INSERT INTO attendance (name, timestamp) VALUES (?, ?)', (name, timestamp.isoformat(sep=' ')))
     df = pd.DataFrame({'name': [name], 'timestamp': [timestamp]})
     if os.path.exists(CSV_PATH):
         df.to_csv(CSV_PATH, mode='a', header=False, index=False)
@@ -139,7 +109,10 @@ def detect():
 
     height, width = image.shape[:2]
     try:
-        results = model(image)
+        # class 0 = 'person' in the COCO-pretrained model. YOLO is used here as a
+        # fast coarse person localizer; face_recognition does the actual face
+        # detection and matching within each person crop.
+        results = model(image, classes=[0])
     except Exception:
         logging.exception('YOLO detection failed')
         return jsonify({'error': 'Face detection failed.'}), 500
@@ -178,7 +151,7 @@ def detect():
 @app.route('/attendance', methods=['GET'])
 def attendance_history():
     cursor.execute('SELECT name, timestamp FROM attendance ORDER BY timestamp DESC LIMIT 50')
-    records = [{'name': row[0], 'timestamp': row[1].isoformat()} for row in cursor.fetchall()]
+    records = [{'name': row[0], 'timestamp': row[1]} for row in cursor.fetchall()]
     return jsonify({'records': records})
 
 
